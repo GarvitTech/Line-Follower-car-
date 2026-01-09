@@ -51,3 +51,10 @@ class VisionProcessor:
             return self.frame_queue.get_nowait()
         except queue.Empty:
             return None
+    
+    def stop(self):
+        """Stop processing and cleanup camera"""
+        self.running = False
+        if self.process_thread.is_alive():
+            self.process_thread.join(timeout=1)
+        self.camera.release()

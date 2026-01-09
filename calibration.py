@@ -10,12 +10,23 @@ class AutoCalibration:
     def full_calibration(self):
         print("=== AUTO-CALIBRATION SEQUENCE ===")
         
-        # 1. Find line
-        print("Searching for line...")
-        self.motors.set_motors(30, 30)
-        while self.vision.get_error() is None:
-            time.sleep(0.1)
-        self.motors.set_motors(0, 0)
+        try:
+            # 1. Find line
+            print("Searching for line...")
+            self.motors.set_motors(30, 30)
+            timeout = time.time() + 10  # 10 second timeout
+            while self.vision.get_error() is None:
+                if time.time() > timeout:
+                    print("Error: Line not found within timeout!")
+                    return False
+                time.sleep(0.1)
+            self.motors.set_motors(0, 0)
+        except Exception as e:
+            print(f"Error during calibration: {e}")
+            self.motors.set_motors(0, 0)
+            return False
+        
+        return True
         
         # 2. Center on line
         print("Centering...")

@@ -27,6 +27,10 @@ class HighPerformanceMotorController:
         # Anti-windup
         self.integral_max = 100
         
+        # Initialize PID state variables
+        self.integral = 0
+        self.prev_error = 0
+        
         self.setup()
     
     def setup(self):
@@ -109,3 +113,10 @@ class HighPerformanceMotorController:
         # Set PWM
         self.left_pwm.ChangeDutyCycle(abs(left_speed))
         self.right_pwm.ChangeDutyCycle(abs(right_speed))
+    
+    def stop(self):
+        """Stop motors and cleanup GPIO"""
+        self.set_motors(0, 0)
+        self.left_pwm.stop()
+        self.right_pwm.stop()
+        GPIO.cleanup()

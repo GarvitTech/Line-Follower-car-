@@ -12,13 +12,24 @@ class LineFollower:
         print("=== INITIALIZING LINE FOLLOWER ===")
         
         # Load configuration
-        with open('config.json') as f:
-            self.config = json.load(f)
+        try:
+            with open('config.json') as f:
+                self.config = json.load(f)
+        except FileNotFoundError:
+            print("Error: config.json not found!")
+            sys.exit(1)
+        except json.JSONDecodeError:
+            print("Error: config.json is invalid JSON!")
+            sys.exit(1)
         
         # Initialize subsystems
-        self.motors = HighPerformanceMotorController()
-        self.vision = VisionProcessor()
-        self.imu = IMUStabilizer()
+        try:
+            self.motors = HighPerformanceMotorController()
+            self.vision = VisionProcessor()
+            self.imu = IMUStabilizer()
+        except Exception as e:
+            print(f"Error initializing subsystems: {e}")
+            sys.exit(1)
         
         # State variables
         self.running = True
@@ -102,11 +113,16 @@ class LineFollower:
     
     def shutdown(self, sig, frame):
         print("\nShutting down...")
-        self.running = False
-        self.vision.running = False
-        self.motors.set_motors(0, 0)
-        GPIO.cleanup()
-        sys.exit(0)
+        try:
+            self.running = False
+            self.vision.running = False
+            self.motors.set_motors(0, 0)
+            import RPi.GPIO as GPIO
+            GPIO.cleanup()
+        except Exception as e:
+            print(f"Error during shutdown: {e}")
+        finally:
+            sys.exit(0)
 
 if __name__ == "__main__":
     robot = LineFollower()

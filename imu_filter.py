@@ -43,3 +43,48 @@ class IMUStabilizer:
         self.kf.update(angle)
         
         return self.kf.x[0]  # Filtered angle
+    
+    def get_yaw(self):
+        """Get current yaw angle from gyroscope"""
+        try:
+            gyro_z = self.read_mpu6050_gyro()[2]
+            accel_data = self.read_mpu6050_accel()
+            return self.complementary_filter(accel_data, gyro_z, 0.01)
+        except Exception as e:
+            print(f"Error reading IMU: {e}")
+            return 0.0
+    
+    def init_mpu6050(self):
+        """Initialize MPU6050 sensor"""
+        try:
+            # Wake up the sensor (clear sleep bit)
+            self.bus.write_byte_data(self.address, 0x6B, 0x00)
+            print("MPU6050 initialized successfully")
+        except Exception as e:
+            print(f"Failed to initialize MPU6050: {e}")
+    
+    def read_mpu6050_accel(self):
+        """Read accelerometer data from MPU6050"""
+        try:
+            # Read accel X, Y, Z (6 bytes: 0x3B-0x40)
+            data = self.bus.read_i2c_block_data(self.address, 0x3B, 6)
+            accel_x = (data[0] << 8 | data[1]) / 16384.0
+            accel_y = (data[2] << 8 | data[3]) / 16384.0
+            accel_z = (data[4] << 8 | data[5]) / 16384.0
+            return [accel_x, accel_y, accel_z]
+        except Exception as e:
+            print(f"Error reading accelerometer: {e}")
+            return [0, 0, 0]
+    
+    def read_mpu6050_gyro(self):
+        """Read gyroscope data from MPU6050"""
+        try:
+            # Read gyro X, Y, Z (6 bytes: 0x43-0x48)
+            data = self.bus.read_i2c_block_data(self.address, 0x43, 6)
+            gyro_x = (data[0] << 8 | data[1]) / 131.0
+            gyro_y = (data[2] << 8 | data[3]) / 131.0
+            gyro_z = (data[4] << 8 | data[5]) / 131.0
+            return [gyro_x, gyro_y, gyro_z]
+        except Exception as e:
+            print(f"Error reading gyroscope: {e}")
+            return [0, 0, 0]
